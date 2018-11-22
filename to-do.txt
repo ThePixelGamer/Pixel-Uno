@@ -1,0 +1,7 @@
+-Draw cards and dynamically adjust where the cards are based on how many the player has
+-Add networking for 2-4 players
+-Add main menu
+-Add localization (if people will translate)
+
+-Figure out how to abuse the Streamlabs API to output the title from Media Shares to a text file
+-Play a good song
