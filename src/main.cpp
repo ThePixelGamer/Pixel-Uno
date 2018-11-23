@@ -14,6 +14,7 @@
 #include <time.h>
 
 #include "mechanics.h"
+#include "Network.h"
 
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 90
@@ -28,6 +29,7 @@ int display_height = SCREEN_HEIGHT * modifier;
 
 SDL_Window     *window;
 mechanics mech;
+Network network;
 const Uint8 *state;
 bool quit = false;
 
@@ -35,6 +37,7 @@ bool ipadd = true;
 bool mainmenu = true;
 string ip = "192.168.0.1";
 short port = 9999;
+bool hasNetInit = false;
 
 void display();
 void reshape_window(int, int);
@@ -81,7 +84,7 @@ int main( int argc, char* args[] )
 	else {
 		cout << "lmao ur shit didn't init";
 	}
-
+	
 	window = SDL_CreateWindow("Pixel UNO", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0); 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
@@ -128,7 +131,10 @@ int main( int argc, char* args[] )
 	
 	//game loop
 	while (!quit)
-	{				
+	{	
+		if(hasNetInit)
+			network.update(); // returns a ClientMessage struct (struct is in Network.h and contains IPaddress and a string which has the data))
+		
 		while( SDL_PollEvent( &event ) ){
 		/* We are only worried about SDL_KEYDOWN and SDL_KEYUP events */
 			switch( event.type ){
@@ -153,6 +159,17 @@ int main( int argc, char* args[] )
 		SDL_RenderFillRect(renderer, &uwu);
 		
 		if(mainmenu) {
+			if(createServer) {
+				if(!hasNetInit){
+					network.isServer = true;	//Is this the server instance
+					network.PORT = port;		//Port The Client Connects To
+					network.MAX_CLIENTS = 4;	//Max Clients
+					network.PACKET_AMT = 8;		//How many packets a tick to check for
+					network.init();				//Init the server, after its
+					hasNetInit = true;
+					//Can Send network.sendMessage
+				}
+			}
 			//text			
 			for(int i = 0; i < ip.size(); i++) {
 				if(ip[i] != '.') {
@@ -181,6 +198,16 @@ int main( int argc, char* args[] )
 		}
 		
 		else {
+			if(!hasNetInit) {
+				network.isServer = false;
+				network.PORT = port;
+				network.serverName = ip;
+				network.init();
+				hasNetInit = true;
+				
+				//Can Send network.sendMessage
+			}
+			
 			SDL_RenderCopy(renderer, textures[1], NULL, &rects[0]); 
 			SDL_RenderCopy(renderer, textures[1], NULL, &rects[1]);
 			SDL_RenderCopy(renderer, textures[1], NULL, &rects[2]);
@@ -193,7 +220,7 @@ int main( int argc, char* args[] )
 			SDL_RenderCopy(renderer, textures[4], NULL, &rects[9]);
 			SDL_RenderCopy(renderer, textures[5], NULL, &rects[10]);
 			SDL_RenderCopy(renderer, textures[6], NULL, &rects[11]);
-
+			
 			mech.tick(renderer);
 		}
 		
